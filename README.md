@@ -93,5 +93,28 @@ If you would like to test another FW image besides the first one we just uploade
 
 
 
+## Step 4 – Create a product release image including all components
+When releasing a product, it doesn’t always make sense that you must upload the application through DFU the first time it is installed. You want to upload all components, SD + Bootloader + Settings + Application at the same time probably during production.
+
+The bootloader is designed so that when the DK is powered on, it will amongst other things check if there is an application present in flash and if there is, it will boot into this application FW. If there is no application, it will boot into BOOTLOADER mode. Holding button 4 also forces the DK into bootloader mode regardless of there being an application present or not as we have seen in the previous steps.
+
+Because of this behavior, when we flash a new application image we need to make sure the bootloader knows that there is an application present in memory – this is done using the [nrfutil bootloader settings](http://infocenter.nordicsemi.com/topic/com.nordic.infocenter.tools/dita/tools/nrfutil/nrfutil_settings_generate_display.html?cp=5_5_6). These settings should be flashed together with the application to make sure the bootloader knows the application is there. These bootloader settings are the reason you cannot just load the application from SES while a bootloader is in place and expect it to boot up into the application FW. Since SES does not know nor upload any bootloader settings, the bootloader will assume the application is either not there, or that it is broken, and boot into bootloader mode.
+
+The proper way to handle this would be:
+1. Compile the application FW
+2. Generate a settings.hex using this new application FW
+3. While the SoftDevice and bootloader are already in place, upload both the application FW and the settings.hex at the same time
+4. Once all this is done, power cycle the DK and it should show up running the new application FW
+
+To test this, you can use script `04_bootloader_settings_merge_flash.bat`. It will generate a settings.hex file based on the app.hex that is present in the folder. The script will then merge together the settings.hex and app.hex into one .hex file. Then the script will flash the merged hex file to the DK. You can verify this by changing out the app.hex, run script 04, power cycle the device DK, and make sure the new application is running by scanning for ADV’s in nRF Connect. 
+
+For example, if `Nordic_UART` is running right now, copy the HRS application into the folder and rename it app.hex, then run script 04, power cycle device DK and see that `Nordic_HRM` will now be advertising instead.
+
+We now know how to upload new application FW while the bootloader is in place using the nRF5x command line programming tools. As noted earlier, you cannot go into the SES IDE, and click Download hex while using the secure BLE bootloader is in place as this will make the device boot into bootloader mode. Also, if your application assumes there is a bootloader in place and has functions calls that require it to be there, it will of course fail if the bootloader is not there.
+
+
+
+
+
 
 
