@@ -113,6 +113,26 @@ For example, if `Nordic_UART` is running right now, copy the HRS application int
 We now know how to upload new application FW while the bootloader is in place using the nRF5x command line programming tools. As noted earlier, you cannot go into the SES IDE, and click Download hex while using the secure BLE bootloader is in place as this will make the device boot into bootloader mode. Also, if your application assumes there is a bootloader in place and has functions calls that require it to be there, it will of course fail if the bootloader is not there.
 
 
+## Step 5 – Debugging Application FW with bootloader in place
+To to debug an application FW while the bootloader is in place, there are different things that can be done. For one, you could disable any call to the bootloader in the application FW and then just run it without the bootloader in place. You can add debug log prints instead of having to actually debug the code. Another option is that you can upload the new application FW as described in step 4, and using SES as an example, just click Debug – Go. SES will check the flash content and see that it already matches the compiled .hex and not re-flash anything. You are now debugging the application FW with the bootloader installed. 
+
+I would suggest making a scrip that retrieves the compiled .hex file from the SES output folder, generates the settings.hex and flashes it automatically (see step 6). All you need to do then is just run the .bat script instead of clicking Download hex, and then you can go into Debug mode from the IDE. 
+If you just uploaded the HRS example in step 04, open the SES project for HRS, then without changing any of the code (assuming you have just compiled the HRS and used that output .hex file in step 4), click Debug – Go; you should now be debugging the HRS application while the bootloader is in place. 
+
+
+
+## Step 6 – Testing Buttonless DFU Example
+Now that we know how this all works, we can test the buttonless DFU example in the same way. 
+1. Compile `C:\nRF5_SDK_15.0.0_a53641a\examples\ble_peripheral\ble_app_buttonless_dfu\pca10040\s132\ses\ble_app_buttonless_dfu_pca10040_s132.emProject`
+2. If you did not install SDK v15.0.0 in the C drive, edit the `06_copy_buttonless_create_settings_merge_flash.bat` script to match your PATHs
+    1. This script will copy the compiled .hex file from the ble_app_buttonless output folder, rename it app.hex, then run 04.bat script which will generate the bootloader settings, merge the two together, then flash it to the DK
+3. Run the `06*.bat` script – this will flash the DK with the new buttonless app FW - make sure you select the device DK when SEGGER asks for the Serial number
+4. Power cycle the DK, and with nRF Connect verify that it is running the buttonless app FW, advertising as `Nordic_Buttonless`
+5. From the SES project, click Debug – Go, and you will now be debugging the buttonless FW application
+6. Exit debug mode
+7. Connect to `Nordic_Buttonless` from nRF Connect, then click the DFU button and select the `FW.zip` that we have generated earlier. The new `FW.zip` will be uploaded over BLE DFU, and the new application FW should boot when device DK reboots. If you have follow this guide step by step, the DK will now be advertising as `Nordic_UART`, and it does no longer have the buttonless DFU service. So getting back to DFU mode is done by holding down button 4 while power cycling the DK
+
+We now have a buttonless DFU FW application working together with our bootloader and FW package generation. We can also debug the application if needed. 
 
 
 
